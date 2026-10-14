@@ -1,0 +1,4 @@
+species,sex,animal_condition,owner_name,barangay,source,census_date
+Dog,Male,Tied,Sample Resident A,Tungkong Mangga,Paravet census,2026-10-09
+Cat,Female,Free,Sample Resident A,Tungkong Mangga,Paravet census,2026-10-09
+Dog,Female,Caged,Sample Resident B,Tungkong Mangga,Paravet census,2026-10-09

@@ -1,0 +1,120 @@
+# System administrator readiness
+
+**Status: repository prepared; not approved for production launch.**
+
+This file is the operator checklist for a new Vercel/Supabase Free deployment
+and a new private GitHub repository. It documents work and checks; it does not
+authorize or perform cloud provisioning, migrations, repository creation,
+deployment, or a push. Follow [README.md](./README.md) to prepare the new
+repository and [db/README.md](./db/README.md) for the exact fresh-database
+sequence. Never put credentials in this file.
+
+## Prepared in the repository
+
+- [x] The new repository layout is documented with the application at its
+  root and Vercel Root Directory set to `.`. The existing monorepo deployment
+  path remains documented separately.
+- [x] `vercel.json` defines the Vite build/output, SPA and API rewrites, and
+  daily maintenance schedule.
+- [x] Fresh Supabase schema bootstrap order, role setup, bootstrap password
+  rotation, and the separately executed 007 enum/schema steps are documented
+  in `db/README.md`.
+- [x] Required server environment variables documented: `DATABASE_URL`,
+  `JWT_SECRET`, and `CRON_SECRET`; secrets must be distinct and server-only.
+- [x] Supabase PostgreSQL access remains in the API using the restricted
+  `ekapon_api` role and transaction pooler; no browser-side Supabase client or
+  service-role secret is part of the deployment configuration.
+- [x] Local sample/test fixtures are stored outside public assets in the
+  excluded `tests/fixtures` directory; the production UI has no fixture link.
+- [x] Maintenance cron documentation explicitly says it is cleanup, not a
+  free-tier keep-alive or uptime guarantee.
+- [x] Database migration sequence and warnings are linked from the operator
+  setup guide.
+
+## Must be completed before any production launch
+
+- [ ] Create a new private GitHub repository and publish only the application
+  folder's contents at its root. Confirm no `.env` files, credentials,
+  `node_modules`, build output, or local database are included.
+- [ ] Create new Vercel and Supabase projects, confirm region, account access,
+  billing/free-plan status, domain, and responsible administrators. Enable
+  MFA on provider accounts.
+- [ ] Confirm current Vercel Hobby and Supabase Free eligibility, quotas,
+  function/runtime limits, database size/connection limits, cron behavior,
+  inactivity pause policy, and availability expectations in provider
+  dashboards. These terms change; do not rely on a fixed quota from this file.
+- [ ] Create and verify a production database backup and a tested restoration
+  procedure before importing real data. The app's JSON export is not a database
+  restore.
+- [ ] Run the fresh-install sequence in `db/README.md` only on the newly
+  created empty Supabase project. Verify the `ekapon` schema, tables, grants,
+  and reference rows exist after the migration. Treat `db/007_operations.sql`
+  as replacing the census-submission table; do not repurpose the fresh install
+  sequence for an existing database.
+- [ ] Set a unique, strong password for `ekapon_api` in Supabase and create its
+  transaction-pooler `DATABASE_URL`. Do not use the `postgres` login. Replace
+  the placeholder password in `db/001_create_api_role.sql` only in the SQL
+  editor; never commit the real password.
+- [ ] Replace bootstrap `admin` and `encoder` passwords before exposing the
+  app. Confirm initial accounts, role assignment, account recovery, and
+  administrator access.
+- [ ] Set production `DATABASE_URL`, independent high-entropy `JWT_SECRET`,
+  and independent high-entropy `CRON_SECRET` in Vercel Production. Use a
+  separate non-production database and secrets for Preview, or disable
+  Preview deployments. Never set private keys as `VITE_*` variables.
+- [ ] Select a Vercel function region near the database. Confirm API rewrites,
+  SPA navigation, database connectivity, login/session behavior, and cron
+  authorization with a non-production deployment before production.
+- [ ] Inspect the actual Vercel deployment artifact to confirm no test
+  fixtures, `.env` files, or other non-production data are deployed.
+  `.vercelignore` excludes tests, but deployment artifact inspection remains
+  unverified because no deployment was performed.
+- [ ] Complete a security review of database privileges and API authorization.
+  PostgreSQL RLS is not currently configured; access is enforced in the API and
+  SQL filters. Keep the `ekapon` schema unavailable through Supabase Data API
+  unless reviewed RLS policies are implemented and tested. Confirm SSL
+  enforcement, network restrictions where feasible, logging/retention, and
+  handling of personal and census data.
+- [ ] Resolve or explicitly accept the two moderate `react-router` /
+  `react-router-dom` advisories reported by `npm audit --omit=dev`. The
+  suggested major-version fix requires compatibility review and tests; do not
+  blindly apply a breaking upgrade.
+- [ ] Review the account-existence timing side-channel described in
+  [README-BACKEND.md](./README-BACKEND.md), and decide whether to add a dummy
+  password-hash verification before launch.
+- [ ] Run typecheck, production build, and the full relevant test suite against
+  an isolated disposable database; then run smoke tests on the non-production
+  deployment. Do not aim tests at production.
+- [ ] Confirm privacy notice, retention rules, consent, administrator
+  responsibilities, and incident/contact procedure with the organization
+  responsible for the real data.
+
+## Go-live smoke tests
+
+Only after the blockers above are resolved, verify on a non-production
+deployment:
+
+1. The site and nested routes load over HTTPS; `/api/v1` calls reach the Vercel
+   function and unauthenticated requests are denied.
+2. Each role can access only its authorized views and records; direct API
+   requests cannot bypass the UI's role restrictions or barangay scoping.
+3. Login, logout, password update, session expiry, account lockout, and the
+   bootstrap-account password change behave as intended.
+4. Representative create/edit/search/report/census-review flows persist and
+   return correct records; validation and error responses are visible.
+5. The maintenance endpoint rejects requests without the correct bearer
+   secret; the configured scheduled invocation succeeds and logs no private
+   data. A cron success is not evidence that the database will remain
+   continuously available.
+6. Backup/export and the separately tested database restore procedure are
+   understood by the designated administrator.
+7. No local simulation data, test users, sample CSVs, credentials, or
+   development-only links appear in the deployment.
+
+## Deployment record
+
+- New GitHub repository created: **no**
+- Cloud resources created: **none by this preparation**
+- Remote migrations run: **none**
+- Vercel deployment/push: **none**
+- Production approval: **pending all items above**
